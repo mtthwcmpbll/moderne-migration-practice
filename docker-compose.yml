@@ -47,7 +47,7 @@ services:
       retries: 5
 
   product-service:
-    build: ./example-ecom-product-service
+    build: ${WORKSPACE}/mtthwcmpbll/example-ecom-product-service
     ports:
       - "8080:8080"
     environment:
@@ -58,7 +58,7 @@ services:
       - SPRING_SLEUTH_SAMPLER_PROBABILITY=1.0
 
   customer-service:
-    build: ./example-ecom-customer-service
+    build: ${WORKSPACE}/mtthwcmpbll/example-ecom-customer-service
     ports:
       - "8081:8081"
     environment:
@@ -69,7 +69,7 @@ services:
       - SPRING_SLEUTH_SAMPLER_PROBABILITY=1.0
 
   order-service:
-    build: ./example-ecom-order-service
+    build: ${WORKSPACE}/mtthwcmpbll/example-ecom-order-service
     ports:
       - "8082:8082"
     environment:
@@ -96,7 +96,7 @@ services:
         condition: service_healthy
 
   inventory-service:
-    build: ./example-ecom-inventory-service
+    build: ${WORKSPACE}/mtthwcmpbll/example-ecom-inventory-service
     ports:
       - "8083:8083"
     environment:
@@ -114,7 +114,7 @@ services:
         condition: service_healthy
 
   notification-service:
-    build: ./example-ecom-notification-service
+    build: ${WORKSPACE}/mtthwcmpbll/example-ecom-notification-service
     ports:
       - "8084:8084"
     environment:
@@ -131,7 +131,7 @@ services:
         condition: service_healthy
 
   kyc-service:
-    build: ./example-ecom-kyc-service
+    build: ${WORKSPACE}/mtthwcmpbll/example-ecom-kyc-service
     ports:
       - "8085:8085"
     environment:
@@ -142,7 +142,7 @@ services:
       - SPRING_SLEUTH_SAMPLER_PROBABILITY=1.0
 
   risk-score-service:
-    build: ./example-ecom-risk-score-service
+    build: ${WORKSPACE}/mtthwcmpbll/example-ecom-risk-score-service
     ports:
       - "8086:8086"
     environment:
@@ -153,7 +153,7 @@ services:
       - SPRING_SLEUTH_SAMPLER_PROBABILITY=1.0
 
   fraud-detection-service:
-    build: ./example-ecom-fraud-detection-service
+    build: ${WORKSPACE}/mtthwcmpbll/example-ecom-fraud-detection-service
     ports:
       - "8087:8087"
     environment:
