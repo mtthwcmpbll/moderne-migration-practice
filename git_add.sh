@@ -4,7 +4,7 @@
 # set -e
 
 (
-cd $WORKSPACE/ecom-common
+cd $WORKSPACE/mtthwcmpbll/example-ecom-common
 git add .
 git commit -m "$1"
 )
