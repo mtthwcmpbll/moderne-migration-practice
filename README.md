@@ -202,43 +202,41 @@ There are Postman collections provided for running some common workflows in the 
 1. Run a spring boot migration recipe to see if it works out of the box: `mod run . --recipe io.moderne.java.spring.boot4.UpgradeSpringBoot_4_0`
 1. Apply the suggested changes to all projects: `mod git apply . --last-recipe-run `
 1. Check to see if projects compile after the recipe: `mod exec . -- mvn clean package`
-1. All projects fail to compile.  Let's inventory the failures:
-    ```
-    ------------------------------------
-    Environment:
-    - MODERNE_JAVA_VERSION=8
-    - MODERNE_JAVA_HOME=/Users/matt/.sdkman/candidates/java/8.0.462-librca
-    - JAVA_HOME=/Users/matt/.sdkman/candidates/java/8.0.462-librca
-    - MODERNE_JAVA_JDK=/Users/matt/.sdkman/candidates/java/8.0.462-librca/bin/java
-    - MODERNE_BUILD_TOOL=maven
-    - MODERNE_BUILD_TOOL_COMPILE=compile
-    - MODERNE_BUILD_TOOL_CHECK=verify
-    - MODERNE_BUILD_TOOL_DIR=/Users/matt/workspaces/moderne-migration-workspace/mtthwcmpbll/example-ecom-common
-    Command: /bin/zsh -c mvn clean package
-    Ran from: /Users/matt/workspaces/moderne-migration-workspace/mtthwcmpbll/example-ecom-common
-    ------------------------------------
-    ...<snip>...
-    [INFO] ------------------------------------------------------------------------
-    [INFO] BUILD FAILURE
-    [INFO] ------------------------------------------------------------------------
-    [INFO] Total time:  2.215 s
-    [INFO] Finished at: 2025-12-08T11:53:42-05:00
-    [INFO] ------------------------------------------------------------------------
-    [ERROR] Failed to execute goal org.apache.maven.plugins:maven-compiler-plugin:3.13.0:compile (default-compile) on project ecom-common: Fatal error compiling: invalid target release: 17 -> [Help 1]
-    [ERROR] 
-    [ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
-    [ERROR] Re-run Maven using the -X switch to enable full debug logging.
-    [ERROR] 
-    [ERROR] For more information about the errors and possible solutions, please read the following articles:
-    [ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoExecutionException
-    ```
-    It looks like the Moderne CLI is still discovering Java 8 and it's failing to build.  Building manually with Java JDK 25 works fine, so this is an issue with Moderne's exec command I think. See [this issue](https://github.com/moderneinc/customer-requests/issues/1579) for more info.
-    It looks like the ecom-common and ecom-rest-client build successfully, but all others fail.
+1. Rebuild the LSTs so they reflect the new changes and the mod CLI will detect the new Java versions: `mod build .`
+We can see that only a couple of our projects - some but not all of our shared libraries - successfully build now.
+
 1. Next, we can try to do our migration in layers to get some iterative value and see where things break down:
-    1. TODO: Upgrade build tools
-    1. TODO: Upgrade test framework
-    1. TODO: Upgrade Java
-    1. TODO: Upgrade Spring Boot
+    1. Upgrade build tools:
+        - `mod run . --recipe org.openrewrite.maven.UpdateMavenWrapper -P "wrapperVersion=3.3.4" -P "wrapperDistribution=script" -P "distributionVersion=3.9.11" -P "addIfMissing=true"`
+        - Note that this doesn't seem to work correctly at the moment, only upgrading some repositories but not others.
+    1. Upgrade test framework:
+        - We know JUnit 6 requires a minimum of Java 17, so we can do JUnit 5 first so that we have a smaller changeset when we upgrade Java.
+        - `mod run . --recipe org.openrewrite.java.testing.junit5.JUnit5BestPractices`
+        - `mod git apply . --last-recipe-run`
+        - If we try to build everything now, we see this is broken in some projects because of `@RunWith(SpringJUnit4ClassRunner.class)`.  This tells us we probably should upgrade Spring _before_ upgrading JUnit.
+    1. Spring Boot 2.7 has better support for modern Java versions including Java 17, so let's upgrade that first.
+        - `mod run . --recipe org.openrewrite.java.spring.boot2.UpgradeSpringBoot_2_7`
+        - `mod git apply . --last-recipe-run`
+        - If we build now, we see that some projects fail to build because of a removed spring-cloud-starter-zipkin dependency.  We can replace this dependency with it's new version.
+    1. Replace the spring-cloud-starter-zipkin dependency with it's new version spring-cloud-sleuth-zipkin:
+        - `mod run . --recipe org.openrewrite.maven.ChangeDependencyGroupIdAndArtifactId -P "oldGroupId=org.springframework.cloud" -P "oldArtifactId=spring-cloud-starter-zipkin" -P "newGroupId=org.springframework.cloud" -P "newArtifactId=spring-cloud-sleuth-zipkin"`
+        - `mod git apply . --last-recipe-run`
+        - Test the build and this should still be building successfully.  3 projects should have updated as a result of this recipe.
+    1. Go back and run the Spring Boot 2.7 upgrade again.  Apply and build it.  This should build now, and you've officially upgraded Spring Boot to 2.7.
+    1. Next up, let's return to our JUnit upgrade.  Rerun and retest.  This should now pass because the upgrade to Spring Boot 2.7 removed the unneeded `@RunWith` annotation.  Now we've upgraded JUnit to 5.
+    1. Although future migration recipes may fix the javax-to-jakarta migration, we can do this as another layer here:
+        - `mod run . --recipe org.openrewrite.java.migrate.jakarta.JakartaEE11`
+        - `mod git apply . --last-recipe-run`
+        - test build
+    1. To go to Spring Boot 3.x onward or JUnit 6, we'll need to upgrade Java to 17 or higher.  Let's tackle that upgrade next, so that we're isolating those specific changes.
+        - `mod run . --recipe org.openrewrite.java.migrate.UpgradeToJava17`
+        - `mod git apply . --last-recipe-run`
+        - This should build successfully - we're up to a new version of Java!
+    1. Let's also run Maven Best Practices to make sure that we're not going to get surprised by any well-known issues like code building for a different version of Java than we expect:
+        - `mod run . --recipe org.openrewrite.maven.BestPractices`
+        - `mod git apply . --last-recipe-run`
+    
+    
 1. Let's run some migration planning recipes to see what we can learn:
     ```bash
     # DevCenterStarter
@@ -257,4 +255,10 @@ There are Postman collections provided for running some common workflows in the 
     mod run . --recipe org.openrewrite.java.dependencies.DependencyInsight -P "groupIdPattern=org.springframework.boot" -P "artifactIdPattern=spring-boot" -P "scope=runtime"
     ```
 1. TODO: Find shared libraries or other kinds of dependencies across repositories
-1. TODO: Find projects that are limited in the Java version they can use
+1. TODO: Find projects that are limited in the Java version they can use'
+
+
+
+
+
+mod run . --recipe org.openrewrite.maven.UpdateMavenWrapper -P "distributionVersion=3.9.11" -P "addIfMissing=true" -P "wrapperDistribution=script"
