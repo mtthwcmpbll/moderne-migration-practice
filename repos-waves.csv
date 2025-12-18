@@ -1,0 +1,12 @@
+cloneUrl,origin,path,branch,org1,org2
+git@github.com:mtthwcmpbll/example-ecom-common.git,github.com,mtthwcmpbll/example-ecom-common,main,Wave1,ALL
+git@github.com:mtthwcmpbll/example-ecom-security.git,github.com,mtthwcmpbll/example-ecom-security,main,Wave2,ALL
+git@github.com:mtthwcmpbll/example-ecom-rest-client.git,github.com,mtthwcmpbll/example-ecom-rest-client,main,Wave3,ALL
+git@github.com:mtthwcmpbll/example-ecom-product-service.git,github.com,mtthwcmpbll/example-ecom-product-service,main,Wave3,ALL
+git@github.com:mtthwcmpbll/example-ecom-customer-service.git,github.com,mtthwcmpbll/example-ecom-customer-service,main,Wave3,ALL
+git@github.com:mtthwcmpbll/example-ecom-order-service.git,github.com,mtthwcmpbll/example-ecom-order-service,main,Wave4,ALL
+git@github.com:mtthwcmpbll/example-ecom-inventory-service.git,github.com,mtthwcmpbll/example-ecom-inventory-service,main,Wave2,ALL
+git@github.com:mtthwcmpbll/example-ecom-notification-service.git,github.com,mtthwcmpbll/example-ecom-notification-service,main,Wave2,ALL
+git@github.com:mtthwcmpbll/example-ecom-kyc-service.git,github.com,mtthwcmpbll/example-ecom-kyc-service,main,Wave2,ALL
+git@github.com:mtthwcmpbll/example-ecom-risk-score-service.git,github.com,mtthwcmpbll/example-ecom-risk-score-service,main,Wave2,ALL
+git@github.com:mtthwcmpbll/example-ecom-fraud-detection-service.git,github.com,mtthwcmpbll/example-ecom-fraud-detection-service,main,Wave4,ALL
