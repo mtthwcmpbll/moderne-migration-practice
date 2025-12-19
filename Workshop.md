@@ -354,7 +354,38 @@ This new project introduces a custom recipe `org.openrewrite.recipe.querydsl.Upg
 
 There's a chicken-and-egg problem here though - newer versions of QueryDSL require Spring Boot 3+ that has moved to the new `jakarta.*` namespace, but we can't run the Spring Boot upgrade because it will fail to compile the older QueryDSL generated code.  We need to do both of these at the same time.
 
-This is an example of a migration recipe _freight train_ - you'll often build a custom recipe that runs the out-of-the-box recipes and then applies some additional ones that are needed in your particular environment.  As you try migrating new repositories you'll find additional speed bumps that will drive you to enhance your custom recipes to move forward for more and more teams.  You build momentum while you're running migrations and enhancing your custom recipes to make it turn-key for more and more repositories.  In this case, the custom recipe repository also contains a recipe named `org.openrewrite.recipe.querydsl.CustomUpgradeSpringBoot_4_0` that combines the Spring Boot 4.0 upgrade and our QueryDSL upgrade into a single recipe.  Let's run that now:
+This is an example of a migration recipe _freight train_ - you'll often build a custom recipe that runs the out-of-the-box recipes and then applies some additional ones that are needed in your particular environment.  As you try migrating new repositories you'll find additional speed bumps that will drive you to enhance your custom recipes to move forward for more and more teams.  You build momentum while you're running migrations and enhancing your custom recipes to make it turn-key for more and more repositories.  In this case, the custom recipe repository also contains a recipe named `org.openrewrite.recipe.querydsl.CustomUpgradeSpringBoot_4_0` that combines the Spring Boot 4.0 upgrade and our QueryDSL upgrade into a single recipe.  Let's run that now for the first wave:
+
+```bash
+cd $WORKSPACE/Wave1
+
+mod run $WORKSPACE --recipe org.openrewrite.recipe.querydsl.CustomUpgradeSpringBoot_4_0
+
+mod git apply $WORKSPACE --last-recipe-run
+```
+
+Test that this builds successfully:
+
+```bash
+$WORKSHOP/build.sh 0
+```
+
+If this build successfully, release this wave of projects by building a release artifact and incrementing to the next SNAPSHOT version:
+
+```bash
+$WORKSHOP/release.sh 0
+```
+
+Now, move on to the second wave of projects.  First, you'll upgrade internal libraries to the newly released version:
+
+```bash
+
+mod run . --recipe org.openrewrite.java.dependencies.UpgradeDependencyVersion -P "groupId=com.example.ecom" -P "artifactId=*" -P "newVersion=1.x"
+
+mod git apply . --last-recipe-run
+```
+
+Then you'll run the custom Spring Boot 4.0 upgrade recipe on Wave 2:
 
 ```bash
 mod run $WORKSPACE --recipe org.openrewrite.recipe.querydsl.CustomUpgradeSpringBoot_4_0
@@ -362,7 +393,14 @@ mod run $WORKSPACE --recipe org.openrewrite.recipe.querydsl.CustomUpgradeSpringB
 mod git apply $WORKSPACE --last-recipe-run
 ```
 
+Finally, test and release this just like the first wave:
 
+```bash
+$WORKSHOP/build.sh 1
+$WORKSHOP/release.sh 1
+```
+
+Continue to upgrade all of your waves.
 
 
 
