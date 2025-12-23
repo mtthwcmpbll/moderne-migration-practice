@@ -2,6 +2,9 @@
 
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
+# Suppress JVM warnings from Maven's libraries on Java 21+
+export MAVEN_OPTS="--enable-native-access=ALL-UNNAMED -XX:+EnableDynamicAgentLoading"
+
 # Colors
 GREEN='\033[0;32m'
 RED='\033[0;31m'
@@ -50,9 +53,10 @@ process_release() {
 
     # 1. Get current version
     # usage: mvn help:evaluate -Dexpression=project.version -q -DforceStdout
-    CURRENT_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
+    CURRENT_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout 2>"$LOG_FILE")
     if [ $? -ne 0 ] || [ -z "$CURRENT_VERSION" ]; then
         echo -e "${RED}Failed to get version for ${service_name}${NC}"
+        cat "$LOG_FILE"
         return 1
     fi
 
@@ -95,7 +99,7 @@ process_release() {
 
     # 2. Set to Release Version
     echo -e "  Setting version to ${RELEASE_VERSION}..."
-    if ! mvn org.codehaus.mojo:versions-maven-plugin:2.16.2:set -DnewVersion="${RELEASE_VERSION}" -DgenerateBackupPoms=false > "$LOG_FILE" 2>&1; then
+    if ! mvn -N org.codehaus.mojo:versions-maven-plugin:2.16.2:set -DnewVersion="${RELEASE_VERSION}" -DgenerateBackupPoms=false > "$LOG_FILE" 2>&1; then
          echo -e "${RED}Failed to set release version for ${service_name}${NC}"
          cat "$LOG_FILE"
          return 1
@@ -114,7 +118,7 @@ process_release() {
 
     # 4. Set to Next Snapshot Version
     echo -e "  Setting version to ${NEXT_SNAPSHOT_VERSION}..."
-    if ! mvn org.codehaus.mojo:versions-maven-plugin:2.16.2:set -DnewVersion="${NEXT_SNAPSHOT_VERSION}" -DgenerateBackupPoms=false > "$LOG_FILE" 2>&1; then
+    if ! mvn -N org.codehaus.mojo:versions-maven-plugin:2.16.2:set -DnewVersion="${NEXT_SNAPSHOT_VERSION}" -DgenerateBackupPoms=false > "$LOG_FILE" 2>&1; then
          echo -e "${RED}Failed to set next snapshot version for ${service_name}${NC}"
          cat "$LOG_FILE"
          return 1

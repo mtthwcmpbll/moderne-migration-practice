@@ -2,6 +2,9 @@
 
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
+# Suppress JVM warnings from Maven's libraries on Java 21+
+export MAVEN_OPTS="--enable-native-access=ALL-UNNAMED -XX:+EnableDynamicAgentLoading"
+
 # Colors
 GREEN='\033[0;32m'
 RED='\033[0;31m'
@@ -27,9 +30,8 @@ build_service() {
     if (cd "$service_path" && mvn clean install > "$LOG_FILE" 2>&1); then
         echo -e "${GREEN}${service_name} built successfully${NC}"
     else
-        echo -e "${RED}${service_name} build failed${NC}"
-
         cat "$LOG_FILE"
+        echo -e "${RED}${service_name} build failed${NC}"
 
         # Return failure status so the script can exit if desired
         return 1
